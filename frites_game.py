@@ -72,7 +72,10 @@ class FritesGame:
         self.root = root
         self.root.title("🍟 McDonald's Frites Catcher")
         self.root.configure(bg=BG_COLOR)
-        self.root.resizable(False, False)
+        self.root.resizable(True, True)  # Fenêtre redimensionnable
+
+        # Définir une taille minimale
+        self.root.minsize(600, 500)
 
         # Variables pour le plein écran
         self.is_fullscreen = False
@@ -118,7 +121,7 @@ class FritesGame:
         # Instructions
         self.instructions = tk.Label(
             self.main_frame,
-            text="Souris pour bouger • F11 plein écran • R pour recommencer",
+            text="Souris / Q-D / Flèches pour bouger • F11 plein écran • R pour recommencer",
             font=("Arial", 10),
             bg=BG_COLOR,
             fg=TEXT_COLOR
@@ -136,9 +139,30 @@ class FritesGame:
         self.combo = 0
         self.max_combo = 0
 
+        # Variables pour contrôle clavier
+        self.keys_pressed = set()
+        self.keyboard_speed = 8
+
         # Binding souris
         self.canvas.bind("<Motion>", self.on_mouse_move)
         self.canvas.bind("<Button-1>", self.on_click)
+
+        # Binding clavier pour les déplacements
+        self.root.bind("<KeyPress-q>", self.on_key_press)
+        self.root.bind("<KeyPress-Q>", self.on_key_press)
+        self.root.bind("<KeyPress-d>", self.on_key_press)
+        self.root.bind("<KeyPress-D>", self.on_key_press)
+        self.root.bind("<KeyPress-Left>", self.on_key_press)
+        self.root.bind("<KeyPress-Right>", self.on_key_press)
+
+        self.root.bind("<KeyRelease-q>", self.on_key_release)
+        self.root.bind("<KeyRelease-Q>", self.on_key_release)
+        self.root.bind("<KeyRelease-d>", self.on_key_release)
+        self.root.bind("<KeyRelease-D>", self.on_key_release)
+        self.root.bind("<KeyRelease-Left>", self.on_key_release)
+        self.root.bind("<KeyRelease-Right>", self.on_key_release)
+
+        # Binding pour recommencer
         self.root.bind("r", lambda e: self.restart_game())
         self.root.bind("R", lambda e: self.restart_game())
 
@@ -240,6 +264,22 @@ class FritesGame:
         self.canvas.delete("all")
         self.draw_background()
         self.show_start_screen()
+
+    def on_key_press(self, event):
+        """Gère l'appui sur une touche"""
+        if not self.game_started:
+            self.start_game()
+        if event.keysym in ['q', 'Q', 'Left']:
+            self.keys_pressed.add('left')
+        elif event.keysym in ['d', 'D', 'Right']:
+            self.keys_pressed.add('right')
+
+    def on_key_release(self, event):
+        """Gère le relâchement d'une touche"""
+        if event.keysym in ['q', 'Q', 'Left']:
+            self.keys_pressed.discard('left')
+        elif event.keysym in ['d', 'D', 'Right']:
+            self.keys_pressed.discard('right')
 
     def on_mouse_move(self, event):
         if self.game_started and not self.game_over:
@@ -415,6 +455,14 @@ class FritesGame:
         # Augmenter la difficulté progressivement
         if self.frame_count % 500 == 0 and FRITE_SPAWN_RATE > 20:
             globals()['FRITE_SPAWN_RATE'] -= 2
+
+        # Déplacement au clavier
+        if 'left' in self.keys_pressed:
+            new_x = max(self.paquet.width // 2, self.paquet.x - self.keyboard_speed)
+            self.paquet.move_to(new_x)
+        if 'right' in self.keys_pressed:
+            new_x = min(WINDOW_WIDTH - self.paquet.width // 2, self.paquet.x + self.keyboard_speed)
+            self.paquet.move_to(new_x)
 
         # Mettre à jour le paquet
         self.paquet.update()

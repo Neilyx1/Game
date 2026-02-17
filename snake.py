@@ -31,6 +31,10 @@ class SnakeGame:
         self.root = root
         self.root.title("🐍 Snake Game")
         self.root.configure(bg=BG_COLOR)
+        self.root.resizable(True, True)  # Fenêtre redimensionnable
+
+        # Définir une taille minimale
+        self.root.minsize(500, 500)
 
         # Variables pour le plein écran
         self.is_fullscreen = False
